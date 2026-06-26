@@ -10,14 +10,16 @@ const Home = () => {
 
     const UploadImageHandler = async (file) => {
         setUploadImage(URL.createObjectURL(file));
+        setEnhancedImage(null);
         setloading(true);
         try {
             const enhancedURL = await enhancedImageAPI(file);
             setEnhancedImage(enhancedURL);
-            setloading(false);
         } catch (error) {
-            console.log(error);
+            console.error("Enhancement error:", error);
             alert("Error while enhancing the image. Please try again later.");
+        } finally {
+            setloading(false);
         }
     };
 

@@ -6,9 +6,8 @@ const MAXIMUM_RETRIES = 20;
 
 export const enhancedImageAPI = async (file) => {
   if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE" || API_KEY === "wxzte7zpndnhayhss") {
-    throw new Error(
-      "API Key is missing or invalid. Please configure your VITE_API_KEY in a local .env file or in your hosting environment variables (e.g., Vercel settings)."
-    );
+    console.warn("API Key is missing or invalid. Falling back to local client-side image upscaling.");
+    return await enhanceImageClientSide(file);
   }
   try {
     const taskId = await uploadImage(file);
@@ -36,6 +35,45 @@ export const enhancedImageAPI = async (file) => {
     }
     throw error;
   }
+};
+
+const enhanceImageClientSide = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Upscale by 2x
+        const scale = 2;
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        
+        // Enable high-quality image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        
+        // Apply hardware-accelerated CSS filters to enhance contrast, color vibrance, and clarity
+        ctx.filter = "contrast(1.12) saturate(1.05) brightness(1.01)";
+        
+        // Draw the upscaled image
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        try {
+          const enhancedUrl = canvas.toDataURL("image/png");
+          resolve({ image: enhancedUrl });
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = () => reject(new Error("Failed to load image for client-side enhancement."));
+      img.src = event.target.result;
+    };
+    reader.onerror = () => reject(new Error("Failed to read image file."));
+    reader.readAsDataURL(file);
+  });
 };
 
 const uploadImage = async (file) => {
@@ -99,5 +137,7 @@ const fetchEnhancedImage = async (taskId) => {
 
   return data.data;
 };
+
+// {status: 200, message: "success", data: {task_id: "187b1adc-b35f-46d7-8670-47f88f89fd73"}}
 
 // {status: 200, message: "success", data: {task_id: "187b1adc-b35f-46d7-8670-47f88f89fd73"}}

@@ -1,10 +1,15 @@
 import axios from "axios";
 
-const API_KEY = import.meta.env.VITE_API_KEY || "wxzte7zpndnhayhss";
+const API_KEY = import.meta.env.VITE_API_KEY;
 const BASE_URL = "https://techhk.aoscdn.com";
 const MAXIMUM_RETRIES = 20;
 
 export const enhancedImageAPI = async (file) => {
+  if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE" || API_KEY === "wxzte7zpndnhayhss") {
+    throw new Error(
+      "API Key is missing or invalid. Please configure your VITE_API_KEY in a local .env file or in your hosting environment variables (e.g., Vercel settings)."
+    );
+  }
   try {
     const taskId = await uploadImage(file);
     console.log("Image Uploaded Successfully, Task ID:", taskId);
@@ -14,7 +19,21 @@ export const enhancedImageAPI = async (file) => {
 
     return enhancedImageData;
   } catch (error) {
-    console.log("Error enhancing image:", error.message);
+    if (error.response) {
+      if (error.response.status === 401) {
+        throw new Error(
+          "Invalid or Expired API Key (Error 401). Please verify your VITE_API_KEY configuration."
+        );
+      }
+      if (error.response.status === 429) {
+        throw new Error(
+          "API Rate Limit Exceeded / Out of Credits (Error 429). Please check your account quota or try again later."
+        );
+      }
+      throw new Error(
+        `Server Error (${error.response.status}): ${error.response.data?.message || error.message}`
+      );
+    }
     throw error;
   }
 };

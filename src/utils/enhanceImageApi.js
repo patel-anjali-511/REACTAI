@@ -6,7 +6,6 @@ const MAXIMUM_RETRIES = 20;
 
 export const enhancedImageAPI = async (file) => {
   if (!API_KEY || API_KEY === "YOUR_API_KEY_HERE" || API_KEY === "wxzte7zpndnhayhss") {
-    console.warn("API Key is missing or invalid. Falling back to local client-side image upscaling.");
     return await enhanceImageClientSide(file);
   }
   try {
